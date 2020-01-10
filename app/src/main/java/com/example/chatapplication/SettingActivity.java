@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -143,7 +144,7 @@ public class SettingActivity extends AppCompatActivity {
                 loadingBar.show();
                 Uri resultUri = result.getUri();
 
-                StorageReference filePath = UserProfileImageRef.child( cuttrntUserId + "jpg" );
+                final StorageReference filePath = UserProfileImageRef.child( cuttrntUserId + "jpg" );
                 filePath.putFile( resultUri ).addOnCompleteListener( new OnCompleteListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
@@ -152,27 +153,28 @@ public class SettingActivity extends AppCompatActivity {
 
 //
 //
-//                         final String downloadUrl = task.getResult().getDownloadUrl().toString();
-                       final String downloadUrl = task.getResult().getStorage().getDownloadUrl().toString();
-
-//                            final String downloadUrl  =task.getResult().getDownloadUrl().toString();
-
-
-
-                            RootRef.child( "user" ).child( cuttrntUserId ).child( "image" )
-                                    .setValue( downloadUrl ).addOnCompleteListener( new OnCompleteListener<Void>() {
+                            filePath.getDownloadUrl().addOnCompleteListener( new OnCompleteListener<Uri>() {
                                 @Override
-                                public void onComplete(@NonNull Task<Void> task) {
+                                public void onComplete(@NonNull Task<Uri> task) {
+                                    String downloadUrl = task.getResult().toString();
+                                    Log.d( "", "onComplete: " + downloadUrl );
+                                    RootRef.child( "user" ).child( cuttrntUserId ).child( "image" )
+                                            .setValue( downloadUrl ).addOnCompleteListener( new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
 
-                                    if (task.isSuccessful()) {
-                                        Toast.makeText( getApplicationContext(), "Image downloaded Successfully", Toast.LENGTH_LONG ).show();
-                                        loadingBar.dismiss();
-                                    } else {
-                                        String massage = task.getException().toString();
-                                        Toast.makeText( getApplicationContext(), "Error" + massage, Toast.LENGTH_LONG ).show();
-                                        loadingBar.dismiss();
+                                            if (task.isSuccessful()) {
+                                                Toast.makeText( getApplicationContext(), "Image downloaded Successfully", Toast.LENGTH_LONG ).show();
+                                                loadingBar.dismiss();
+                                            } else {
+                                                String massage = task.getException().toString();
+                                                Toast.makeText( getApplicationContext(), "Error" + massage, Toast.LENGTH_LONG ).show();
+                                                loadingBar.dismiss();
 
-                                    }
+                                            }
+
+                                        }
+                                    } );
 
                                 }
                             } );
